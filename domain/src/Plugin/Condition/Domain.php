@@ -16,7 +16,10 @@ use Drupal\Core\Plugin\Context\ContextDefinition;
  *
  * @Condition(
  *   id = "domain",
- *   label = @Translation("Domain")
+ *   label = @Translation("Domain"),
+ *   context = {
+ *     "domain" = @ContextDefinition("entity:domain", label = @Translation("Domain"))
+ *   }
  * )
  *
  */
@@ -26,22 +29,23 @@ class Domain extends ConditionPluginBase {
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
-
-    $options = array();
-
-    foreach (domain_load_and_sort() as $key => $value) {
-      $options[$key] = $value->get('name');
-    }
-
     $form['domains'] = array(
       '#type' => 'checkboxes',
-      '#title' => $this->t('Domains'),
-      '#options' => $options,
+      '#title' => $this->t('When the following domains are active'),
       '#default_value' => $this->configuration['domains'],
-      '#description' => $this->t('Select domains for this block to be shown. If no are selected, this block will be visible on all domains.'),
+      '#options' => array_map('\Drupal\Component\Utility\String::checkPlain', domain_options_list()),
+      '#description' => $this->t('If you select no domains, the condition will evaluate to TRUE for all requests.'),
     );
-
     return parent::buildConfigurationForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultConfiguration() {
+    return array(
+      'domains' => array(),
+    ) + parent::defaultConfiguration();
   }
 
   /**
@@ -56,20 +60,20 @@ class Domain extends ConditionPluginBase {
    * {@inheritdoc}
    */
   public function summary() {
-
-    $domains = $this->configuration['domains'];
-
+    // @TODO: This doesn't seem to fire.
+    // Use the domain labels. They will be sanitized below.
+    $domains = array_intersect_key(domain_options_list(), $this->configuration['domains']);
     if (count($domains) > 1) {
       $domains = implode(', ', $domains);
     }
     else {
       $domains = reset($domains);
     }
-    if (!empty($this->configuration['negate'])) {
-      return $this->t('Visible on all domains extept: @domains', array('@domains' => $domains));
+    if ($this->isNegated()) {
+      return $this->t('Active domain is not @domains', array('@domains' => $domains));
     }
     else {
-      return $this->t('Visible on this domains: @domains', array('@domains' => $domains));
+      return $this->t('Active domain is @domains', array('@domains' => $domains));
     }
   }
 
@@ -77,14 +81,13 @@ class Domain extends ConditionPluginBase {
    * {@inheritdoc}
    */
   public function evaluate() {
-    return in_array(domain_get_domain()->get('id'), $this->configuration['domains']);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function defaultConfiguration() {
-    return array('domains' => array()) + parent::defaultConfiguration();
+    $domains = $this->configuration['domains'];
+    if (empty($domains) && !$this->isNegated()) {
+      return TRUE;
+    }
+    $context = $this->getContextValue('domain');
+    // NOTE: The block system handles negation for us.
+    return (bool) in_array($this->getContextValue('domain'), $domains);
   }
 
 }

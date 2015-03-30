@@ -5,13 +5,14 @@
  * Domain-based access control for content.
  */
 
-use Drupal\domain\DomainManager;
+use Drupal\domain\DomainNegotiator;
 use Drupal\domain\DomainInterface;
 use Drupal\node\NodeInterface;
 use Drupal\node\Entity\NodeType;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Session\AccountProxy;
-use Drupal\user\UserInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 
 /**
  * Defines the name of the node access control field.
@@ -26,27 +27,25 @@ define('DOMAIN_ACCESS_USER_FIELD', 'field_domain_user');
 /**
  * Implements hook_node_grants().
  */
-function domain_access_node_grants(AccountProxy $account, $op) {
+function domain_access_node_grants(AccountInterface $account, $op) {
   $grants = array();
   $active = domain_get_domain();
   $id = $active->getDomainId();
-
   // Grants for view are simple. Use the active domain.
   if ($op == 'view') {
     $grants['domain_id'][] = $id;
     return $grants;
   }
-
   // Grants for edit/delete require permissions.
   $user = entity_load('user', $account->id());
   $user_domains = domain_access_get_entity_values($user, DOMAIN_ACCESS_USER_FIELD);
-  if ($op == 'update' && $account->hasPermission('edit domain content') && isset($user_domains[$id])) {
-    $grants['domain_id'][] = $id;
+  // @TODO Right now, we do not account for context of the request. Should we?
+  if ($op == 'update' && $user->hasPermission('edit domain content') && !empty($user_domains)) {
+    $grants['domain_id'] = array_values($user_domains);
   }
-  if ($op == 'delete' && $account->hasPermission('delete domain content') && isset($user_domains[$id])) {
-    $grants['domain_id'][] = $id;
+  if ($op == 'delete' && $user->hasPermission('delete domain content') && !empty($user_domains)) {
+    $grants['domain_id'] = array_values($user_domains);
   }
-
   return $grants;
 }
 
@@ -55,8 +54,8 @@ function domain_access_node_grants(AccountProxy $account, $op) {
  */
 function domain_access_node_access_records(NodeInterface $node) {
   $grants = array();
-  foreach (domain_access_get_entity_values($node, DOMAIN_ACCESS_NODE_FIELD) as $value) {
-    if ($domain = domain_load($value)) {
+  foreach (domain_access_get_entity_values($node, DOMAIN_ACCESS_NODE_FIELD) as $id => $domainId) {
+    if ($domain = domain_load($id)) {
       $grants[] = array(
         'realm' => 'domain_id',
         'gid' => $domain->getDomainId(),
@@ -72,7 +71,7 @@ function domain_access_node_access_records(NodeInterface $node) {
 /**
  * Sets the default value for new fields.
  */
-function domain_access_default_value($entity, $instance) {
+function domain_access_default_value(FieldableEntityInterface $entity, FieldDefinitionInterface $definition) {
   $item = array();
   if ($active = domain_get_domain()) {
     $item[0]['target_uuid'] = $active->uuid();
@@ -90,13 +89,13 @@ function domain_access_default_value($entity, $instance) {
  *   defined by this module.
  *
  * @return array
- *   An array of domain id values, where $key == $value.
+ *   An array of domain id values, where the key is id() and the value is domainId().
  */
 function domain_access_get_entity_values($entity, $field_name) {
   // @TODO: static cache.
   $list = array();
   // @TODO In tests, $entity is returning null.
-  if (is_null($entity) || $entity->isNew()) {
+  if (is_null($entity)) {
     return $list;
   }
   // Get the values of an entity.
@@ -105,8 +104,9 @@ function domain_access_get_entity_values($entity, $field_name) {
   if (!empty($values)) {
     foreach ($values as $item) {
       if ($target = $item->getValue()) {
-        $domain = domain_load($target['target_id']);
-        $list[$domain->getDomainId()] = $target['target_id'];
+        if ($domain = domain_load($target['target_id'])) {
+          $list[$domain->id()] = $domain->getDomainId();
+        }
       }
     }
   }

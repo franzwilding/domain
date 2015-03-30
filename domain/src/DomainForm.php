@@ -30,7 +30,7 @@ class DomainForm extends EntityForm {
     }
     $form['domain_id'] = array(
       '#type' => 'value',
-      '#value' => $domain->getDomainId(),
+      '#value' => $domain->id(),
     );
     $form['hostname'] = array(
       '#type' => 'textfield',
