@@ -7,6 +7,7 @@
 
 namespace Drupal\domain\HttpKernel;
 
+use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\domain\DomainInterface;
 use Drupal\domain\DomainNegotiatorInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -47,7 +48,7 @@ class DomainPathProcessor implements OutboundPathProcessorInterface {
   /**
    * Implements Drupal\Core\PathProcessor\OutboundPathProcessorInterface::processOutbound().
    */
-  public function processOutbound($path, &$options = array(), Request $request = NULL, CacheableMetadata $cacheable_metadata = NULL) {
+  public function processOutbound($path, &$options = array(), Request $request = NULL, BubbleableMetadata $bubbleable_metadata = NULL) {
     static $active_domain;
     if (!isset($active_domain)) {
       $active_domain = $this->domainNegotiator->negotiateActiveDomain();

@@ -4,11 +4,11 @@ services:
     tags:
       - { name: access_check }
     arguments: ['@domain.negotiator']
-  block.domain_context:
-    class: Drupal\domain\EventSubscriber\DomainContext
+  domain.current_domain_context:
+    class: Drupal\domain\ContextProvier\CurrentDomainContext
     arguments: ['@domain.negotiator']
     tags:
-      - { name: 'event_subscriber' }
+      - { name: 'context_provider' }
   domain.creator:
     class: Drupal\domain\DomainCreator
     tags:
