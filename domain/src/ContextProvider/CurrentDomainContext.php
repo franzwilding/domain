@@ -5,7 +5,7 @@
  * Contains \Drupal\domain\Event\DomainContext.
  */
 
-namespace Drupal\domain\EventSubscriber;
+namespace Drupal\domain\ContextProvider;
 
 use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\ContextDefinition;
