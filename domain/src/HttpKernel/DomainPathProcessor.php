@@ -7,6 +7,7 @@
 
 namespace Drupal\domain\HttpKernel;
 
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\domain\DomainInterface;
 use Drupal\domain\DomainNegotiatorInterface;
@@ -43,6 +44,7 @@ class DomainPathProcessor implements OutboundPathProcessorInterface {
   public function __construct(DomainNegotiatorInterface $negotiator, ModuleHandlerInterface $module_handler) {
     $this->domainNegotiator = $negotiator;
     $this->moduleHandler = $module_handler;
+    Cache::invalidateTags(array('route_match'));
   }
 
   /**
