@@ -8,12 +8,11 @@
 namespace Drupal\domain\HttpKernel;
 
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\domain\DomainInterface;
 use Drupal\domain\DomainNegotiatorInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\PathProcessor\OutboundPathProcessorInterface;
-use Drupal\Core\Cache\CacheableMetadata;
+use Drupal\Core\Render\BubbleableMetadata;
 use Symfony\Component\HttpFoundation\Request;
 
 /**

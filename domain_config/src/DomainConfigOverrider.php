@@ -7,7 +7,6 @@
 
 namespace Drupal\domain_config;
 
-use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Config\ConfigFactoryOverrideInterface;
@@ -118,17 +117,5 @@ class DomainConfigOverrider implements ConfigFactoryOverrideInterface {
     return NULL;
   }
 
-  /**
-   * Gets the cacheability metadata associated with the config factory override.
-   *
-   * @param string $name
-   *   The name of the configuration override to get metadata for.
-   *
-   * @return \Drupal\Core\Cache\CacheableMetadata
-   *   A cacheable metadata object.
-   */
-  public function getCacheableMetadata($name) {
-    return new CacheableMetadata();
-  }
 }
 
