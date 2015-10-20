@@ -186,7 +186,7 @@ function domain_access_domain_source_alter(&$source, $path, $options) {
   // @TODO: setting to enable this rewrite, as in older versions?
   if ($list && $domains = \Drupal::service('domain.loader')->loadMultipleSorted($list)) {
     $first = current($domains);
-    if ($first->id() != $options['active_domain']->id()) {
+    if ($options['active_domain'] && $first->id() != $options['active_domain']->id()) {
       $source = $first;
     }
   }

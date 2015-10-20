@@ -4,6 +4,7 @@
  * @file
  * API documentation file for Domain module.
  */
+use Drupal\domain\DomainInterface;
 
 /**
  * Standard classes and implementations.

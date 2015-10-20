@@ -25,6 +25,11 @@ class DomainAccessControlHandler extends EntityAccessControlHandler {
    * {@inheritdoc}
    */
   public function checkAccess(EntityInterface $entity, $operation, $langcode = Language::LANGCODE_DEFAULT, AccountInterface $account = NULL) {
+
+    if(!$account) {
+      return AccessResult::forbidden();
+    }
+
     // Check the global permission.
     if ($account->hasPermission('administer domains')) {
       return AccessResult::allowed();
