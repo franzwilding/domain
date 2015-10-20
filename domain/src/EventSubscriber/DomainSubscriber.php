@@ -8,6 +8,7 @@
 namespace Drupal\domain\EventSubscriber;
 
 use Drupal\domain\DomainNegotiatorInterface;
+use Drupal\domain\DomainLoaderInterface;
 use Drupal\Core\Access\AccessCheckInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Session\AccountInterface;
@@ -15,7 +16,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 
 /**
  * Implements DomainSubscriber
@@ -27,6 +28,8 @@ class DomainSubscriber implements EventSubscriberInterface {
    */
   protected $domainNegotiator;
 
+  protected $domainLoader;
+
   protected $accessCheck;
 
   protected $account;
@@ -36,13 +39,16 @@ class DomainSubscriber implements EventSubscriberInterface {
    *
    * @param \Drupal\domain\DomainNegotiatorInterface $negotiator
    *   The domain negotiator service.
+   * @param \Drupal\domain\DomainLoaderInterface $loader
+   *   The domain loader.
    * @param Drupal\Core\Access\AccessCheckInterface
    *   The access check interface.
    * @param \Drupal\Core\Session\AccountInterface
    *   The current user account.
    */
-  public function __construct(DomainNegotiatorInterface $negotiator, AccessCheckInterface $access_check, AccountInterface $account) {
+  public function __construct(DomainNegotiatorInterface $negotiator, DomainLoaderInterface $loader, AccessCheckInterface $access_check, AccountInterface $account) {
     $this->domainNegotiator = $negotiator;
+    $this->domainLoader = $loader;
     $this->accessCheck = $access_check;
     $this->account = $account;
   }
@@ -66,14 +72,20 @@ class DomainSubscriber implements EventSubscriberInterface {
         // Else check for active domain or inactive access.
         elseif ($apply = $this->accessCheck->checkPath($path)) {
           $access = $this->accessCheck->access($this->account);
-          if ($access->isForbidden()) {
+          // If the access check fails, reroute to the default domain.
+          // Note that Allowed, Neutral, and Failed are the options here.
+          // We insist on Allowed.
+          if (!$access->isAllowed()) {
+            $default = $this->domainLoader->loadDefaultDomain();
+            $domain_url = $default->getUrl();
             $redirect = TRUE;
+            $redirect_type = 302;
           }
         }
       }
       if ($redirect) {
         // Pass a redirect if necessary.
-        $response = new RedirectResponse($domain_url, $redirect_type);
+        $response = new TrustedRedirectResponse($domain_url, $redirect_type);
         $event->setResponse($response);
       }
     }
@@ -83,8 +95,8 @@ class DomainSubscriber implements EventSubscriberInterface {
    * Implements EventSubscriberInterface::getSubscribedEvents().
    */
   static function getSubscribedEvents() {
-    // Returns multiple times. Should be CONTROLLER?
-    $events[KernelEvents::REQUEST][] = array('onKernelRequestDomain', 400);
+    // This needs to fire very early in the stack, before accounts are cached.
+    $events[KernelEvents::REQUEST][] = array('onKernelRequestDomain', 50);
     return $events;
   }
 

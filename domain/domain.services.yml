@@ -4,6 +4,11 @@ services:
     tags:
       - { name: access_check }
     arguments: ['@domain.negotiator']
+  block.domain_context:
+    class: Drupal\domain\ContextProvider\CurrentDomainContext
+    arguments: ['@domain.negotiator']
+    tags:
+      - { name: 'context_provider' }
   domain.creator:
     class: Drupal\domain\DomainCreator
     tags:
@@ -28,7 +33,7 @@ services:
     class: Drupal\domain\EventSubscriber\DomainSubscriber
     tags:
       - { name: event_subscriber }
-    arguments: ['@domain.negotiator', '@access_check.domain', '@current_user']
+    arguments: ['@domain.negotiator', '@domain.loader', '@access_check.domain', '@current_user']
   domain.validator:
     class: Drupal\domain\DomainValidator
     tags:

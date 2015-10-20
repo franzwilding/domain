@@ -39,8 +39,8 @@ use Drupal\Core\Entity\EntityStorageInterface;
  *     "uuid" = "uuid",
  *   },
  *   links = {
- *     "delete-form" = "/admin/structure/domain/alias/delete/{domain_alias}",
- *     "edit-form" = "/admin/structure/domain/alias/edit/{domain_alias}"
+ *     "delete-form" = "/admin/config/domain/alias/delete/{domain_alias}",
+ *     "edit-form" = "/admin/config/domain/alias/edit/{domain_alias}"
  *   }
  * )
  */
@@ -81,14 +81,23 @@ class DomainAlias extends ConfigEntityBase implements DomainAliasInterface {
    */
   protected $redirect;
 
+  /**
+   * {@inheritdoc}
+   */
   public function getPattern() {
     return $this->pattern;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getDomainId() {
     return $this->domain_id;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getRedirect() {
     return $this->redirect;
   }

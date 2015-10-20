@@ -43,8 +43,8 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
  *     "weight" = "weight"
  *   },
  *   links = {
- *     "delete-form" = "/admin/structure/domain/delete/{domain}",
- *     "edit-form" = "/admin/structure/domain/edit/{domain}"
+ *     "delete-form" = "/admin/config/domain/delete/{domain}",
+ *     "edit-form" = "/admin/config/domain/edit/{domain}"
  *   }
  * )
  */
@@ -202,7 +202,7 @@ class Domain extends ConfigEntityBase implements DomainInterface {
   public function saveDefault() {
     if (!$this->isDefault()) {
       // Swap the current default.
-      if ($default = domain_default()) {
+      if ($default = \Drupal::service('domain.loader')->loadDefaultDomain()) {
         $default->is_default = 0;
         $default->save();
       }
@@ -261,7 +261,8 @@ class Domain extends ConfigEntityBase implements DomainInterface {
    * {@inheritdoc}
    */
   public function setUrl() {
-    $this->url = $this->getScheme() . $this->hostname . request_uri();
+    $uri = \Drupal::request()->getRequestUri();
+    $this->url = $this->getScheme() . $this->hostname . $uri;
   }
 
   /**
